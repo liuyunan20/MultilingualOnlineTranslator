@@ -14,7 +14,6 @@ class Translator:
         self.target = None
         self.word = None
         self.translations = []
-        self.sentences = []
 
     def choose_language(self, source, target, word):
         self.source = self.languages[source]
@@ -27,38 +26,29 @@ class Translator:
         headers = {'User-Agent': 'Mozilla/5.0'}
         while True:
             page = requests.get(url, headers=headers)
-            print(url)
             if page.status_code == 200:
                 soup = BeautifulSoup(page.content, "html.parser")
                 # get word translations, save in a list
+                self.translations.append(f"{self.target.capitalize()} Translations:\n")
                 translation_links = soup.find_all("a", {"class": "translation"})
-                for link in translation_links:
-                    self.translations.append(link.text.replace(" ", "").replace("\n", "").replace("\r", ""))
+                for i in range(1, len(translation_links)):
+                    self.translations.append(translation_links[i].text.strip().replace("\n", "").replace("\r", "") + "\n")
+                self.translations.append("\n")
                 # get example sentences, save in a list
+                self.translations.append(f"{self.target.capitalize()} Examples:\n")
                 examples = soup.find_all("div", {"class": "example"})
                 for example in examples:
                     exp_sentence = example.find_all("span", {"class": "text"})
                     sentence = []
                     for exp in exp_sentence:
-                        sentence.append(exp.text.strip().replace("\n", "").replace("\r", ""))
-                    self.sentences += sentence
+                        sentence.append(exp.text.strip().replace("\n", "").replace("\r", "") + "\n")
+                    self.translations += sentence
                 break
 
-    def save_translations(self):
-        with open(f"{self.word}.txt", "a") as tran_file:
-            tran_file.writelines(self.translations)
-            tran_file.writelines(self.sentences)
-
-    def print_translations(self):
-        print(f"{self.target} Translations:")
-        for translation in self.translations:
-            if translation != "Translation":
-                print(translation)
-        print()
-        print(f"{self.target} Examples:")
-        for sentence in self.sentences:
-            print(sentence)
-        print()
+    def print_and_save(self):
+        print(*self.translations, sep="")
+        with open(f"{self.word}.txt", "w", encoding="utf-8") as tran_file:
+            print(*self.translations, sep="", file=tran_file)
 
     def translate_all(self, source, word):
         for x in self.languages:
@@ -74,22 +64,21 @@ class Translator:
                 url = self.choose_language(source, x, word)
                 headers = {'User-Agent': 'Mozilla/5.0'}
                 page = requests.get(url, headers=headers)
-                print(url)
                 if page.status_code == 200:
                     soup = BeautifulSoup(page.content, "html.parser")
                     translation_links = soup.find_all("a", {"class": "translation"})
+                    x_translations = []
                     for link in translation_links:
-                        self.translations.append(link.text.replace(" ", "").replace("\n", "").replace("\r", ""))
-                    print(f"{self.target} Translations:")
-                    print(self.translations[1])
-                    print()
+                        x_translations.append(link.text.strip().replace("\n", "").replace("\r", ""))
+                    self.translations.append(f"{self.target.capitalize()} Translations:\n")
+                    self.translations.append(x_translations[1] + "\n")
+                    self.translations.append("\n")
                     example = soup.find("div", {"class": "example"})
-                    print(f"{self.target} Example:")
+                    self.translations.append(f"{self.target.capitalize()} Example:\n")
                     exp_sentence = example.find_all("span", {"class": "text"})
                     for exp in exp_sentence:
-                        print(exp.text.strip().replace("\n", "").replace("\r", ""))
-                        self.sentences.append(exp.text.strip().replace("\n", "").replace("\r", ""))
-                    print()
+                        self.translations.append(exp.text.strip().replace("\n", "").replace("\r", "") + "\n")
+                    self.translations.append("\n")
 
 
 print('''Hello, you're welcome to the translator. Translator supports: 
@@ -117,5 +106,4 @@ if user_target == "0":
     translator.translate_all(user_source, user_word)
 else:
     translator.get_translations(user_source, user_target, user_word)
-    translator.print_translations()
-translator.save_translations()
+translator.print_and_save()
