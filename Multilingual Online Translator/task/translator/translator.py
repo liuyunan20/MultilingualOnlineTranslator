@@ -25,26 +25,28 @@ class Translator:
     def get_translations(self, source, target, word):
         url = self.choose_language(source, target, word)
         headers = {'User-Agent': 'Mozilla/5.0'}
-        while True:
-            page = requests.get(url, headers=headers)
-            if page.status_code == 200:
-                soup = BeautifulSoup(page.content, "html.parser")
-                # get word translations, save in a list
-                self.translations.append(f"{self.target.capitalize()} Translations:\n")
-                translation_links = soup.find_all("a", {"class": "translation"})
-                for i in range(1, len(translation_links)):
-                    self.translations.append(translation_links[i].text.strip().replace("\n", "").replace("\r", "") + "\n")
-                self.translations.append("\n")
-                # get example sentences, save in a list
-                self.translations.append(f"{self.target.capitalize()} Examples:\n")
-                examples = soup.find_all("div", {"class": "example"})
-                for example in examples:
-                    exp_sentence = example.find_all("span", {"class": "text"})
-                    sentence = []
-                    for exp in exp_sentence:
-                        sentence.append(exp.text.strip().replace("\n", "").replace("\r", "") + "\n")
-                    self.translations += sentence
-                break
+        page = requests.get(url, headers=headers)
+        if page.status_code == 404:
+            print(f"Sorry, unable to find {self.word}")
+        elif page.status_code == 200:
+            soup = BeautifulSoup(page.content, "html.parser")
+            # get word translations, save in a list
+            self.translations.append(f"{self.target.capitalize()} Translations:\n")
+            translation_links = soup.find_all("a", {"class": "translation"})
+            for i in range(1, len(translation_links)):
+                self.translations.append(translation_links[i].text.strip().replace("\n", "").replace("\r", "") + "\n")
+            self.translations.append("\n")
+            # get example sentences, save in a list
+            self.translations.append(f"{self.target.capitalize()} Examples:\n")
+            examples = soup.find_all("div", {"class": "example"})
+            for example in examples:
+                exp_sentence = example.find_all("span", {"class": "text"})
+                sentence = []
+                for exp in exp_sentence:
+                    sentence.append(exp.text.strip().replace("\n", "").replace("\r", "") + "\n")
+                self.translations += sentence
+        else:
+            print("Something wrong with your internet connection")
 
     def print_and_save(self):
         print(*self.translations, sep="")
@@ -65,7 +67,9 @@ class Translator:
                 url = self.choose_language(source, x, word)
                 headers = {'User-Agent': 'Mozilla/5.0'}
                 page = requests.get(url, headers=headers)
-                if page.status_code == 200:
+                if page.status_code == 404:
+                    print(f"Sorry, unable to find {self.word}")
+                elif page.status_code == 200:
                     soup = BeautifulSoup(page.content, "html.parser")
                     translation_links = soup.find_all("a", {"class": "translation"})
                     x_translations = []
@@ -80,12 +84,16 @@ class Translator:
                     for exp in exp_sentence:
                         self.translations.append(exp.text.strip().replace("\n", "").replace("\r", "") + "\n")
                     self.translations.append("\n")
+                else:
+                    print("Something wrong with your internet connection")
 
 
 user_source = sys.argv[1]
 user_target = sys.argv[2]
 user_word = sys.argv[3]
 translator = Translator()
+if user_target not in translator.languages and user_target != "all":
+    print(f"Sorry, the program doesn't support {user_target}")
 if user_target == "all":
     translator.translate_all(user_source, user_word)
 else:
