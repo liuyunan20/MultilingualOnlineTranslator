@@ -1,13 +1,14 @@
 import requests
 from bs4 import BeautifulSoup
+import sys
 
 
 class Translator:
-    languages = {"1": "arabic", "2": "german", "3": "english",
-                 "4": "spanish", "5": "french", "6": "hebrew",
-                 "7": "japanese", "8": "dutch", "9": "polish",
-                 "10": "portuguese", "11": "romanian", "12": "russian",
-                 "13": "turkish"}
+    languages = ["arabic", "german", "english",
+                 "spanish", "french", "hebrew",
+                 "japanese", "dutch", "polish",
+                 "portuguese", "romanian", "russian",
+                 "turkish"]
 
     def __init__(self):
         self.source = None
@@ -16,8 +17,8 @@ class Translator:
         self.translations = []
 
     def choose_language(self, source, target, word):
-        self.source = self.languages[source]
-        self.target = self.languages[target]
+        self.source = source
+        self.target = target
         self.word = word
         return f"https://context.reverso.net/translation/{self.source}-{self.target}/{self.word}"
 
@@ -81,28 +82,11 @@ class Translator:
                     self.translations.append("\n")
 
 
-print('''Hello, you're welcome to the translator. Translator supports: 
-1. Arabic
-2. German
-3. English
-4. Spanish
-5. French
-6. Hebrew
-7. Japanese
-8. Dutch
-9. Polish
-10. Portuguese
-11. Romanian
-12. Russian
-13. Turkish
-Type the number of your language: ''')
-user_source = input()
-print("Type the number of language you want to translate to or '0' to translate to all languages: ")
-user_target = input()
-print('Type the word you want to translate:')
-user_word = input()
+user_source = sys.argv[1]
+user_target = sys.argv[2]
+user_word = sys.argv[3]
 translator = Translator()
-if user_target == "0":
+if user_target == "all":
     translator.translate_all(user_source, user_word)
 else:
     translator.get_translations(user_source, user_target, user_word)
